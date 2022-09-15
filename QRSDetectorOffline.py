@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import gmtime, strftime
 from scipy.signal import butter, lfilter
-
+import glob
+import os
 
 LOG_DIR = "logs/"
 PLOT_DIR = "plots/"
@@ -11,7 +12,7 @@ PLOT_DIR = "plots/"
 class QRSDetectorOffline(object):
     """
     Python Offline ECG QRS Detector based on the Pan-Tomkins algorithm.
-    
+
     Michał Sznajder (Jagiellonian University) - technical contact (msznajder@gmail.com)
     Marta Łukowska (Jagiellonian University)
 
@@ -58,7 +59,7 @@ class QRSDetectorOffline(object):
     SOFTWARE.
     """
 
-    def __init__(self, ecg_data_path, verbose=True, log_data=False, plot_data=False, show_plot=False):
+    def __init__(self, ecg_data_path, fs=60, verbose=True, log_data=False, plot_data=False, show_plot=False):
         """
         QRSDetectorOffline class initialisation method.
         :param string ecg_data_path: path to the ECG dataset
@@ -68,20 +69,21 @@ class QRSDetectorOffline(object):
         :param bool show_plot: flag for showing generated results plot - will not show anything if plot is not generated
         """
         # Configuration parameters.
+        self.filename = os.path.basename(ecg_data_path).split('.')[0]
         self.ecg_data_path = ecg_data_path
 
-        self.signal_frequency = 250  # Set ECG device frequency in samples per second here.
+        self.signal_frequency = fs  # Set ECG device frequency in samples per second here.
 
-        self.filter_lowcut = 0.0
+        self.filter_lowcut = 0.00001
         self.filter_highcut = 15.0
         self.filter_order = 1
 
-        self.integration_window = 15  # Change proportionally when adjusting frequency (in samples).
+        self.integration_window = int((15/250)*fs)  # Change proportionally when adjusting frequency (in samples).
 
         self.findpeaks_limit = 0.35
-        self.findpeaks_spacing = 50  # Change proportionally when adjusting frequency (in samples).
+        self.findpeaks_spacing = int((50/250)*fs)   # Change proportionally when adjusting frequency (in samples).
 
-        self.refractory_period = 120  # Change proportionally when adjusting frequency (in samples).
+        self.refractory_period = int((120/250)*fs)  # Change proportionally when adjusting frequency (in samples).
         self.qrs_peak_filtering_factor = 0.125
         self.noise_peak_filtering_factor = 0.125
         self.qrs_noise_diff_weight = 0.25
@@ -117,13 +119,11 @@ class QRSDetectorOffline(object):
             self.print_detection_data()
 
         if log_data:
-            self.log_path = "{:s}QRS_offline_detector_log_{:s}.csv".format(LOG_DIR,
-                                                                           strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
+            self.log_path = "{:s}{:s}_{:s}.csv".format(LOG_DIR, str(self.filename), strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
             self.log_detection_data()
 
         if plot_data:
-            self.plot_path = "{:s}QRS_offline_detector_plot_{:s}.png".format(PLOT_DIR,
-                                                                             strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
+            self.plot_path = "{:s}{:s}_{:s}.png".format(PLOT_DIR, str(self.filename), strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
             self.plot_detection_data(show_plot=show_plot)
 
     """Loading ECG measurements data methods."""
@@ -310,5 +310,8 @@ class QRSDetectorOffline(object):
 
 
 if __name__ == "__main__":
-    qrs_detector = QRSDetectorOffline(ecg_data_path="ecg_data/ecg_data_1.csv", verbose=True,
-                                      log_data=True, plot_data=True, show_plot=False)
+    all_csv_paths = sorted(glob.glob('./ProcessedDataNoVideoCSV/*.csv'))
+    for csv_path in all_csv_paths:
+        print(csv_path)
+        qrs_detector = QRSDetectorOffline(ecg_data_path=csv_path, fs=60, verbose=False,
+                                          log_data=True, plot_data=True, show_plot=False)

@@ -119,11 +119,11 @@ class QRSDetectorOffline(object):
             self.print_detection_data()
 
         if log_data:
-            self.log_path = "{:s}{:s}_{:s}.csv".format(LOG_DIR, str(self.filename), strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
+            self.log_path = "{:s}{:s}.csv".format(LOG_DIR, str(self.filename))
             self.log_detection_data()
 
         if plot_data:
-            self.plot_path = "{:s}{:s}_{:s}.png".format(PLOT_DIR, str(self.filename), strftime("%Y_%m_%d_%H_%M_%S", gmtime()))
+            self.plot_path = "{:s}{:s}.png".format(PLOT_DIR, str(self.filename))
             self.plot_detection_data(show_plot=show_plot)
 
     """Loading ECG measurements data methods."""
